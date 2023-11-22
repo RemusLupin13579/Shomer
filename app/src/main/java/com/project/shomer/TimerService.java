@@ -2,6 +2,7 @@ package com.project.shomer;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,7 +10,6 @@ import android.os.CountDownTimer;
 import android.os.IBinder;
 
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 
 public class TimerService extends Service {
 
@@ -19,7 +19,6 @@ public class TimerService extends Service {
         return null;
     }
 
-    private static final String TAG = "TimerService";
     private CountDownTimer mCountDownTimer;
     private long mTimeLeftInMillis;
     private NotificationManager mNotificationManager;
@@ -59,13 +58,22 @@ public class TimerService extends Service {
     }
 
     private void updateNotification(String text) {
+        // Create an Intent to launch your desired activity
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+        // Create a PendingIntent
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         SharedPreferences preferences = getSharedPreferences("TimerPrefs", MODE_PRIVATE);
         // Retrieve estimated finish time from shared preferences
         String estimatedFinishTimeMillis = preferences.getString("endtime", "00:00");
 
-        mNotificationBuilder.setContentTitle(text);
-        mNotificationBuilder.setContentText("Estimated hour: " + estimatedFinishTimeMillis);
+        mNotificationBuilder.setContentTitle(text)
+                .setContentText("Estimated hour: " + estimatedFinishTimeMillis)
+                .setContentIntent(pendingIntent)  // Set the PendingIntent
+                .setAutoCancel(true);  // Auto-cancel the notification when clicked
+        // Notify with a unique ID
         mNotificationManager.notify(1, mNotificationBuilder.build());
     }
 
