@@ -4,23 +4,26 @@ package com.project.shomer;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.project.shomer.CircularProgressView;
-
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -28,17 +31,12 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
-    //private CircularProgressView circularProgressView;
-    //private ProgressBar progressBar;
-    //private CountDownTimer countDownTimer;
-    //private long startTimeMillis;
     private Button startButton;
     private TextView startTimeTextView;
     private Spinner durationSpinner;
 
     private static long START_TIME_IN_MILLIS =  21600000;
     private TextView mTextViewCountDown;
-    private Button mButtonReset;
     private CountDownTimer mCountDownTimer;
     private boolean mTimerRunning;
     private long mTimeLeftInMillis = START_TIME_IN_MILLIS;
@@ -50,6 +48,20 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREF_NAME = "TimerPrefs";
     private static final String KEY_START_TIME = "StartTime";
     private static final String KEY_ESTIMATED_FINISH_TIME = "EstimatedFinishTime";
+
+    private BroadcastReceiver countdownReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null && intent.getAction() != null &&
+                    intent.getAction().equals("com.project.shomer.COUNTDOWN_UPDATE")) {
+                mTimerRunning = true;
+                startButton.setText("Reset");
+                long timeLeftInMillis = intent.getLongExtra("timeLeftInMillis", 21600000);
+                // Update your UI with the new countdown value
+                updateCountdownUI(timeLeftInMillis);
+            }
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,11 +69,17 @@ public class MainActivity extends AppCompatActivity {
 
         createNotificationChannel();
 
+        IntentFilter filter = new IntentFilter("com.project.shomer.COUNTDOWN_UPDATE");
+        registerReceiver(countdownReceiver, filter);
+
         durationSpinner = findViewById(R.id.durationSpinner);
         startTimeTextView = findViewById(R.id.startTimeTextView);
         mTextViewCountDown = findViewById(R.id.text_view_countdown);
 
         startButton = findViewById(R.id.startButton);
+        // Set the background color of the button
+        startButton.setBackgroundResource(R.drawable.roundedbutton); // Replace with your drawable resource
+        startButton.getBackground().setColorFilter(getResources().getColor(R.color.my_light_button_background), PorterDuff.Mode.SRC_ATOP);
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -98,7 +116,20 @@ public class MainActivity extends AppCompatActivity {
         displayStartAndFinishTimes();
     }
 
+    private void updateCountdownUI(long timeLeftInMillis) {
+        int hours = (int) (timeLeftInMillis / (1000 * 60 * 60));
+        int minutes = (int) ((timeLeftInMillis / (1000 * 60)) % 60);
+        int seconds = (int) ((timeLeftInMillis / 1000) % 60);
+
+        String timeLeftFormatted = String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds);
+
+        // Update your UI element (e.g., a TextView) with the new countdown value
+        mTextViewCountDown.setText(timeLeftFormatted);
+    }
+
+
     private void startTimer() {
+        Toast.makeText(getApplicationContext(), "לא לשכוח ברכה אחרונה", Toast.LENGTH_SHORT).show();
         saveStartTime();
         saveEstimatedFinishTime();
         displayStartAndFinishTimes();
@@ -114,8 +145,9 @@ public class MainActivity extends AppCompatActivity {
             public void onFinish() {
                 mTimerRunning = false;
                 startButton.setText("Start");
-                startButton.setVisibility(View.INVISIBLE);
-                mButtonReset.setVisibility(View.VISIBLE);
+                // Show a notification
+                showNotification("הגיע הזמן", "קדימה שוקולד!");
+                Toast.makeText(getApplicationContext(), "FINISHED", Toast.LENGTH_SHORT).show();
             }
         }.start();
         mTimerRunning = true;
@@ -124,6 +156,25 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, TimerService.class);
         intent.putExtra("time_left", mTimeLeftInMillis);
         startService(intent);
+
+    }
+
+    private void showNotification(String title, String message) {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Check if notification channels are supported (required for Android Oreo and above)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel("timer_channel_id", "Timer Channel", NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "timer_channel_id")
+                .setSmallIcon(R.drawable.pizzatime)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        notificationManager.notify(1, builder.build());
     }
 
     private void saveStartTime() {
@@ -174,18 +225,6 @@ public class MainActivity extends AppCompatActivity {
         return sdf.format(date);
     }
 
-    private void pauseTimer() {
-        mCountDownTimer.cancel();
-        mTimerRunning = false;
-        startButton.setText("Start");
-        mButtonReset.setVisibility(View.VISIBLE);
-    }
-
-    private void updateStartTimeTextView() {
-        String startTime = getTimeFromMillis(startTimeMillis);
-        startTimeTextView.setText("הטיימר התחיל ב-" + startTime);
-    }
-
     private void resetTimer() {
         stopService(new Intent(this, TimerService.class));
         mCountDownTimer.cancel();
@@ -196,10 +235,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateCountDownText() {
-        int minutes = (int) (mTimeLeftInMillis / 1000) / 60;
-        int seconds = (int) (mTimeLeftInMillis / 1000) % 60;
+        int hours = (int) (mTimeLeftInMillis / (1000 * 60 * 60));
+        int minutes = (int) ((mTimeLeftInMillis / (1000 * 60)) % 60);
+        int seconds = (int) ((mTimeLeftInMillis / 1000) % 60);
 
-        String timeLeftFormatted = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
+        String timeLeftFormatted = String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds);
 
         mTextViewCountDown.setText(timeLeftFormatted);
     }
@@ -210,16 +250,11 @@ public class MainActivity extends AppCompatActivity {
         return sdf.format(date);
     }
 
-    private long getMillisFromDuration(String duration) {
-        int hours = Integer.parseInt(duration.split(" ")[0]);
-        return TimeUnit.HOURS.toMillis(hours);
-    }
-
     private void spinnerSettings() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 this,
                 R.array.duration_options,
-                android.R.layout.simple_spinner_item
+                R.layout.spinner_item_layout
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         durationSpinner.setAdapter(adapter);
@@ -241,5 +276,13 @@ public class MainActivity extends AppCompatActivity {
             notificationManager.createNotificationChannel(channel);
         }
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Unregister the receiver to avoid memory leaks
+        unregisterReceiver(countdownReceiver);
+    }
+
 
 }
