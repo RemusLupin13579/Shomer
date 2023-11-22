@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?><!-- res/layout/activity_main.xml -->
+<!-- res/layout/activity_main.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity"
+    android:gravity="center"
+    android:background="#FFEEE5">
+
+    <ImageView
+    android:layout_width="200dp"
+    android:layout_height="200dp"
+    android:background="@drawable/pizzasurf"/>
+
+
+    <LinearLayout
+        android:layout_marginTop="50dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="בחר מנהג:"
+            android:fontFamily="@font/lupatraktor"
+            android:textColor="#0D074C"
+            android:textSize="20dp" />
+
+    <Spinner
+        android:id="@+id/durationSpinner"
+        android:layout_width="70dp"
+        android:layout_height="35dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginRight="10dp"
+        android:entries="@array/duration_options"
+        android:spinnerMode="dialog" />
+
+    </LinearLayout>
+
+
+    <TextView
+        android:layout_marginTop="20dp"
+        android:id="@+id/text_view_countdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:text="00:00"
+        android:textColor="@android:color/black"
+        android:textSize="60sp" />
+
+    <Button
+        android:id="@+id/startButton"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/roundedbutton"
+        android:onClick="startTimer"
+        android:text="Start"
+        android:textSize="45dp" />
+
+    <TextView
+        android:id="@+id/startTimeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dp"
+        android:text=""
+        android:fontFamily="@font/lupa_traktor"
+        android:textColor="#202039"
+        android:textSize="18sp" />
+
+</LinearLayout>
