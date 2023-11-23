@@ -2,6 +2,6 @@
 <!-- roundedbutton.xml in res/drawable -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@color/my_light_button_background" />
+    <solid android:color="#CA9884" />
     <corners android:radius="300dp" />
 </shape>

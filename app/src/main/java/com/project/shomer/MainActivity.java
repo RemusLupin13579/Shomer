@@ -95,6 +95,9 @@ public class MainActivity extends AppCompatActivity {
         durationSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
+                // Update the timer duration when a spinner item is selected
+                updateTimerDuration();
+
                 if(position == 2){
                     currentMinhag = 21600000;
                 }
@@ -104,6 +107,13 @@ public class MainActivity extends AppCompatActivity {
                 if(position == 0){
                     currentMinhag =  3600000;
                 }
+                // Reset the timer with the new duration
+                resetTimer();
+
+                // Update UI
+                mTimeLeftInMillis = currentMinhag;
+                updateCountDownText();
+                displayStartAndFinishTimes();
             }
 
             @Override
@@ -219,15 +229,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getTimeFromMillisForDisplay(long millis) {
-        // Convert milliseconds to a formatted time string (HH:mm)
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        // Convert milliseconds to a formatted time string (hh:mm a)
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
         Date date = new Date(millis);
         return sdf.format(date);
     }
 
     private void resetTimer() {
         stopService(new Intent(this, TimerService.class));
-        mCountDownTimer.cancel();
+        if (mCountDownTimer != null) {
+            mCountDownTimer.cancel();
+        }
         mTimerRunning = false;
         mTimeLeftInMillis = START_TIME_IN_MILLIS;
         updateCountDownText();
@@ -242,6 +254,17 @@ public class MainActivity extends AppCompatActivity {
         String timeLeftFormatted = String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds);
 
         mTextViewCountDown.setText(timeLeftFormatted);
+    }
+
+    private void updateTimerDuration() {
+        // Retrieve the selected duration from the spinner
+        String selectedDuration = durationSpinner.getSelectedItem().toString();
+
+        // Convert the selected duration to milliseconds
+        mTimeLeftInMillis = getMillisFromDuration(selectedDuration);
+
+        // Update UI elements (e.g., text views) accordingly
+        updateCountDownText();
     }
 
     private String getTimeFromMillis(long millis) {
@@ -262,6 +285,9 @@ public class MainActivity extends AppCompatActivity {
         // Set default duration to 6 hours
         int defaultDurationPosition = adapter.getPosition("6 שעות");
         durationSpinner.setSelection(defaultDurationPosition);
+
+        // Update the timer duration based on the selected item
+        updateTimerDuration();
     }
 
     private void createNotificationChannel() {
@@ -275,6 +301,11 @@ public class MainActivity extends AppCompatActivity {
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+    }
+
+    private long getMillisFromDuration(String duration) { //"6 שעות">millis
+        int hours = Integer.parseInt(duration.split(" ")[0]);
+        return TimeUnit.HOURS.toMillis(hours);
     }
 
     @Override

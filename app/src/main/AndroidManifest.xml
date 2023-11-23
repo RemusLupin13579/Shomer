@@ -17,10 +17,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Shomer"
         tools:targetApi="31">
+        <activity
+            android:name=".Brachot"
+            android:exported="false" />
+
         <service
             android:name=".TimerService"
             android:enabled="true"
-            android:exported="false"></service>
+            android:exported="false" />
 
         <activity
             android:name=".Splash"

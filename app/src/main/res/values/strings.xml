@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Shomer</string>
     <string-array name="duration_options">
-        <item>שעה</item>
+        <item>1 שעה</item>
         <item>3 שעות</item>
         <item>6 שעות</item>
     </string-array>
